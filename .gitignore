@@ -1,0 +1,19 @@
+# Dependencias y build
+node_modules/
+dist/
+
+# Netlify CLI (netlify link / deploy desde la terminal)
+.netlify/
+
+# Variables de entorno locales. Se commitean .env.example y .env.production:
+# este último no tiene secretos (VITE_* queda dentro del bundle público).
+.env
+.env.*
+!.env.example
+!.env.production
+
+# Logs y editores
+*.log
+.DS_Store
+.idea/
+.vscode/
