@@ -1,0 +1,15 @@
+# Proxy al backend en Railway: el navegador solo habla con Netlify (mismo
+# origen), así la cookie HttpOnly "jwt" es de primera parte y no hace falta
+# CORS en el navegador. Reemplazar TU-BACKEND.up.railway.app por el dominio
+# que genere Railway (el CI falla mientras siga el marcador).
+/api/*              https://TU-BACKEND.up.railway.app/api/:splat         200!
+
+# Solo estos endpoints de /auth/ van al backend: /auth/sign-in es una ruta
+# del SPA y tiene que seguir sirviéndose desde aquí.
+/auth/login         https://TU-BACKEND.up.railway.app/auth/login         200!
+/auth/logout        https://TU-BACKEND.up.railway.app/auth/logout        200!
+/auth/check-auth    https://TU-BACKEND.up.railway.app/auth/check-auth    200!
+/auth/user/details  https://TU-BACKEND.up.railway.app/auth/user/details  200!
+
+# SPA (React Router con BrowserRouter): cualquier otra ruta sirve index.html
+/*                  /index.html                                          200
