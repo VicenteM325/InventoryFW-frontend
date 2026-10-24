@@ -1,7 +1,6 @@
 import {
   Card,
   Input,
-  Checkbox,
   Button,
   Typography,
 } from "@material-tailwind/react";
@@ -10,6 +9,7 @@ import { useState, useContext } from "react";
 import { AuthContext } from "@/context/AuthContext";
 import { login as loginService, getUserDetails } from "@/services/authService";
 import { getHomeByRole } from "@/auth/menuByRole";
+import { validateRequired } from "@/utils/validators";
 
 export function SignIn() {
   const [userName, setUserName] = useState("");
@@ -22,6 +22,13 @@ export function SignIn() {
   const handleSubmit = async (e) => {
   e.preventDefault();
   setError("");
+
+  const validationError =
+    validateRequired(userName, "El usuario") || validateRequired(password, "La contraseña");
+  if (validationError) {
+    setError(validationError);
+    return;
+  }
   setLoading(true);
 
   try {
@@ -112,19 +119,6 @@ export function SignIn() {
             </Typography>
           )}
 
-          <Checkbox
-            label={
-              <Typography
-                variant="small"
-                color="gray"
-                className="flex items-center justify-start font-medium"
-              >
-                Recordarme
-              </Typography>
-            }
-            containerProps={{ className: "-ml-2.5" }}
-            disabled={loading}
-          />
 
           <Button type="submit" className="mt-6" fullWidth disabled={loading}>
             {loading ? "Iniciando sesión..." : "Iniciar Sesión"}

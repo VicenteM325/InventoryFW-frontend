@@ -26,7 +26,6 @@ export function Profile() {
       try {
         setLoading(true);
         const response = await getUserDetails();
-        console.log("Datos del usuario:", response);
         
         setUserData({
           name: response.name || "",

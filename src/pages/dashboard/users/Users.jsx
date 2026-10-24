@@ -13,10 +13,25 @@ import {
 } from "@material-tailwind/react";
 import { PencilIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { userService } from "@/services/userService";
+import {
+  collectErrors,
+  validateEmail,
+  validatePassword,
+  validatePasswordConfirmation,
+  validateRequired,
+  validateUserName,
+} from "@/utils/validators";
 
-const TABLE_HEAD = ['Nombre', 'Usuario', 'Rol', 'Estado', 'Acciones'];
+const TABLE_HEAD = ['Nombre', 'Usuario', 'Correo', 'Rol', '2FA', 'Estado', 'Acciones'];
 
-const EMPTY_CREATE_FORM = { name: '', userName: '', password: '', roleName: 'ROLE_EMPLOYEE' };
+const EMPTY_CREATE_FORM = {
+  name: '',
+  userName: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  roleName: 'ROLE_EMPLOYEE',
+};
 
 export function Users() {
   const [users, setUsers] = useState([]);
@@ -28,7 +43,9 @@ export function Users() {
   const [saving, setSaving] = useState(false);
 
   const [editingUserId, setEditingUserId] = useState(null);
-  const [editForm, setEditForm] = useState({ name: '', roleName: '' });
+  const [editForm, setEditForm] = useState({ name: '', email: '', roleName: '' });
+  const [createErrors, setCreateErrors] = useState({});
+  const [editError, setEditError] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -40,7 +57,7 @@ export function Users() {
       const data = await userService.getAll();
       setUsers(data);
     } catch (err) {
-      console.error('Error fetching users:', err);
+      setError(err.response?.data?.message || 'No se pudieron cargar los usuarios');
     } finally {
       setLoading(false);
     }
@@ -48,10 +65,21 @@ export function Users() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    const errors = collectErrors({
+      name: validateRequired(createForm.name, 'El nombre'),
+      userName: validateUserName(createForm.userName),
+      email: validateEmail(createForm.email, { optional: true }),
+      password: validatePassword(createForm.password),
+      confirmPassword: validatePasswordConfirmation(createForm.password, createForm.confirmPassword),
+    });
+    setCreateErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setSaving(true);
     setError('');
     try {
-      await userService.create(createForm);
+      const { confirmPassword, ...payload } = createForm;
+      await userService.create({ ...payload, email: payload.email.trim() || null });
       setCreateForm(EMPTY_CREATE_FORM);
       setShowCreateForm(false);
       await fetchUsers();
@@ -64,14 +92,20 @@ export function Users() {
 
   const startEdit = (user) => {
     setEditingUserId(user.userId);
-    setEditForm({ name: user.name, roleName: user.roleName });
+    setEditForm({ name: user.name, email: user.email || '', roleName: user.roleName });
+    setEditError('');
   };
 
   const handleUpdate = async (userId) => {
+    const message =
+      validateRequired(editForm.name, 'El nombre') || validateEmail(editForm.email, { optional: true });
+    setEditError(message);
+    if (message) return;
+
     setSaving(true);
     setError('');
     try {
-      await userService.update(userId, editForm);
+      await userService.update(userId, { ...editForm, email: editForm.email.trim() || null });
       setEditingUserId(null);
       await fetchUsers();
     } catch (err) {
@@ -123,9 +157,9 @@ export function Users() {
         </Button>
       </div>
 
-      {error && (
+      {(error || editError) && (
         <Typography variant="small" color="red" className="mb-4">
-          {error}
+          {error || editError}
         </Typography>
       )}
 
@@ -140,20 +174,34 @@ export function Users() {
                 label="Nombre completo"
                 value={createForm.name}
                 onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                required
+                error={Boolean(createErrors.name)}
               />
               <Input
                 label="Nombre de usuario"
                 value={createForm.userName}
                 onChange={(e) => setCreateForm({ ...createForm, userName: e.target.value })}
-                required
+                error={Boolean(createErrors.userName)}
+              />
+              <Input
+                label="Correo (opcional; activa la verificación en dos pasos)"
+                type="email"
+                value={createForm.email}
+                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                error={Boolean(createErrors.email)}
               />
               <Input
                 label="Contraseña"
                 type="password"
                 value={createForm.password}
                 onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                required
+                error={Boolean(createErrors.password)}
+              />
+              <Input
+                label="Confirmar contraseña"
+                type="password"
+                value={createForm.confirmPassword}
+                onChange={(e) => setCreateForm({ ...createForm, confirmPassword: e.target.value })}
+                error={Boolean(createErrors.confirmPassword)}
               />
               <Select
                 label="Rol"
@@ -164,6 +212,11 @@ export function Users() {
                 <Option value="ROLE_ADMIN">Administrador</Option>
               </Select>
             </div>
+            {Object.values(createErrors).map((message) => (
+              <Typography key={message} variant="small" color="red">
+                {message}
+              </Typography>
+            ))}
             <div className="flex justify-end gap-4">
               <Button type="button" variant="text" color="blue-gray" onClick={() => setShowCreateForm(false)}>
                 Cancelar
@@ -213,6 +266,20 @@ export function Users() {
                   </td>
                   <td className="p-4">
                     {isEditing ? (
+                      <Input
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                        error={Boolean(editError)}
+                      />
+                    ) : (
+                      <Typography variant="small" color="blue-gray">
+                        {user.email || '—'}
+                      </Typography>
+                    )}
+                  </td>
+                  <td className="p-4">
+                    {isEditing ? (
                       <Select
                         value={editForm.roleName}
                         onChange={(value) => setEditForm({ ...editForm, roleName: value })}
@@ -225,6 +292,15 @@ export function Users() {
                         {user.roleName === 'ROLE_ADMIN' ? 'Administrador' : 'Encargado'}
                       </Typography>
                     )}
+                  </td>
+                  <td className="p-4">
+                    <Chip
+                      value={user.twoFactorEnabled ? 'Activa' : 'No'}
+                      color={user.twoFactorEnabled ? 'green' : 'blue-gray'}
+                      size="sm"
+                      variant="ghost"
+                      className="w-fit"
+                    />
                   </td>
                   <td className="p-4">
                     <Chip

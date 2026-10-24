@@ -55,7 +55,7 @@ export function EditProduct() {
     } catch (error) {
       console.error('Error fetching product:', error);
       alert('Error al cargar el producto');
-      navigate('/products');
+      navigate('/dashboard/products');
     } finally {
       setLoading(false);
     }
@@ -94,7 +94,7 @@ export function EditProduct() {
         price: parseFloat(formData.price),
         supplierId: formData.supplierId ? parseInt(formData.supplierId) : null,
       });
-      navigate('/products');
+      navigate('/dashboard/products');
     } catch (error) {
       console.error('Error updating product:', error);
       alert(error.response?.data?.message || 'Error al actualizar el producto');
@@ -246,7 +246,7 @@ export function EditProduct() {
             <Button
               variant="text"
               color="blue-gray"
-              onClick={() => navigate('/products')}
+              onClick={() => navigate('/dashboard/products')}
             >
               Cancelar
             </Button>
