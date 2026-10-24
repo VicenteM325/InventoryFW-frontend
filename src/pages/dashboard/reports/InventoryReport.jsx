@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Card, Chip, Spinner, Typography } from "@material-tailwind/react";
+import { Card, Spinner, Typography } from "@material-tailwind/react";
 import Chart from "react-apexcharts";
 import {
   BellAlertIcon,
@@ -18,23 +18,25 @@ import { DataTable } from "./components/DataTable";
 import { Panel } from "./components/Panel";
 import { stockStatusChart } from "./chartConfigs";
 
-const STATUS_COLORS = {
-  DISPONIBLE: "green",
-  STOCK_BAJO: "amber",
-  AGOTADO: "red",
-  PENDIENTE: "amber",
-  ATENDIDA: "green",
+// Colores con contraste suficiente (texto oscuro sobre fondo claro); el chip "ghost" de
+// Material Tailwind deja el texto casi invisible.
+const STATUS_STYLES = {
+  DISPONIBLE: "bg-green-50 text-green-800 ring-green-200",
+  ATENDIDA: "bg-green-50 text-green-800 ring-green-200",
+  STOCK_BAJO: "bg-amber-50 text-amber-800 ring-amber-200",
+  PENDIENTE: "bg-amber-50 text-amber-800 ring-amber-200",
+  AGOTADO: "bg-red-50 text-red-800 ring-red-200",
 };
 
 function StatusChip({ status }) {
   return (
-    <Chip
-      size="sm"
-      variant="ghost"
-      color={STATUS_COLORS[status] || "blue-gray"}
-      value={formatStatus(status)}
-      className="w-fit"
-    />
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${
+        STATUS_STYLES[status] || "bg-blue-gray-50 text-blue-gray-800 ring-blue-gray-200"
+      }`}
+    >
+      {formatStatus(status)}
+    </span>
   );
 }
 

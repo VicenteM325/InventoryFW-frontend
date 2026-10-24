@@ -63,7 +63,7 @@ export function topProductsChart(topProducts) {
   const top = topProducts.slice(0, 8);
   return {
     type: "bar",
-    height: Math.max(240, top.length * 38 + 40),
+    height: Math.max(220, top.length * 40 + 30),
     series: [{ name: "Unidades", data: top.map((p) => p.units) }],
     options: {
       chart: baseChart,
@@ -76,12 +76,12 @@ export function topProductsChart(topProducts) {
       },
       grid: { ...baseGrid, xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } } },
       xaxis: {
-        categories: top.map((p) => truncate(p.name, 24)),
+        categories: top.map((p) => truncate(p.name, 42)),
         labels: { show: false },
         axisBorder: { show: false },
         axisTicks: { show: false },
       },
-      yaxis: { labels: { style: { colors: "#374151", fontSize: "12px" }, maxWidth: 160 } },
+      yaxis: { labels: { style: { colors: "#374151", fontSize: "12px" }, maxWidth: 260 } },
       tooltip: {
         y: {
           formatter: (units, { dataPointIndex }) =>
