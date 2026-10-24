@@ -11,5 +11,12 @@
 /auth/check-auth    https://TU-BACKEND.up.railway.app/auth/check-auth    200!
 /auth/user/details  https://TU-BACKEND.up.railway.app/auth/user/details  200!
 
+# Segundo factor (2FA) y recuperacion de contrasena (endpoints del API). Las
+# paginas del SPA para esto son /auth/forgot y /auth/reset, que no se proxean.
+/auth/2fa/verify        https://TU-BACKEND.up.railway.app/auth/2fa/verify        200!
+/auth/2fa/resend        https://TU-BACKEND.up.railway.app/auth/2fa/resend        200!
+/auth/forgot-password   https://TU-BACKEND.up.railway.app/auth/forgot-password   200!
+/auth/reset-password    https://TU-BACKEND.up.railway.app/auth/reset-password    200!
+
 # SPA (React Router con BrowserRouter): cualquier otra ruta sirve index.html
 /*                  /index.html                                          200

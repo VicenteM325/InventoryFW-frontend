@@ -4,7 +4,7 @@ import {
   Button,
   Typography,
 } from "@material-tailwind/react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useContext } from "react";
 import { AuthContext } from "@/context/AuthContext";
 import { login as loginService, getUserDetails } from "@/services/authService";
@@ -146,6 +146,12 @@ export function SignIn() {
           <Button type="submit" className="mt-6" fullWidth disabled={loading}>
             {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </Button>
+
+          <Typography variant="small" className="text-center font-medium mt-4">
+            <Link to="/auth/forgot" className="text-gray-900">
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </Typography>
 
           <Typography
             variant="paragraph"
