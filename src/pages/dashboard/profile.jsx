@@ -8,7 +8,9 @@ import {
 } from "@material-tailwind/react";
 import { PencilIcon } from "@heroicons/react/24/solid";
 import { ProfileInfoCard } from "@/widgets/cards";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
+import { AuthContext } from "@/context/AuthContext";
+import { SecuritySettings } from "./SecuritySettings";
 import { getUserDetails } from "../../services/authService";
 
 export function Profile() {
@@ -16,34 +18,40 @@ export function Profile() {
     name: "",
     userName: "",
     email: "",
+    twoFactorEnabled: false,
     role: null,
   });
+  const { refreshUser } = useContext(AuthContext);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setLoading(true);
-        const response = await getUserDetails();
-        
-        setUserData({
-          name: response.name || "",
-          userName: response.userName || "",
-          email: response.email || "",
-          role: response.role || null,
-        });
-        setError(null);
-      } catch (err) {
-        console.error("Error al cargar datos del usuario:", err);
-        setError("No se pudieron cargar los datos del usuario");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchUserData = useCallback(async () => {
+    try {
+      const response = await getUserDetails();
 
-    fetchUserData();
+      setUserData({
+        name: response.name || "",
+        userName: response.userName || "",
+        email: response.email || "",
+        twoFactorEnabled: Boolean(response.twoFactorEnabled),
+        role: response.role || null,
+      });
+      setError(null);
+    } catch (err) {
+      setError("No se pudieron cargar los datos del usuario");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
+
+  // Tras cambiar correo o 2FA se refresca el perfil y el usuario del contexto.
+  const handleSecurityChanged = async () => {
+    await Promise.all([fetchUserData(), refreshUser()]);
+  };
 
   if (loading) {
     return (
@@ -87,7 +95,7 @@ export function Profile() {
   const profileDetails = {
     "Nombre completo": userData.name || "No especificado",
     "Nombre de usuario": userData.userName || "No especificado",
-    Email: userData.email || "No especificado",
+    Correo: userData.email || "No especificado",
     Rol: getRoleName(),
   };
 
@@ -127,6 +135,12 @@ export function Profile() {
               }
             />
             
+            <SecuritySettings
+              email={userData.email}
+              twoFactorEnabled={userData.twoFactorEnabled}
+              onChanged={handleSecurityChanged}
+            />
+
             <Card className="border border-blue-gray-100 shadow-none">
               <CardBody className="p-4">
                 <Typography variant="h6" color="blue-gray" className="mb-4">

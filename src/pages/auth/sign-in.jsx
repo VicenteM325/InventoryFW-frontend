@@ -10,47 +10,60 @@ import { AuthContext } from "@/context/AuthContext";
 import { login as loginService, getUserDetails } from "@/services/authService";
 import { getHomeByRole } from "@/auth/menuByRole";
 import { validateRequired } from "@/utils/validators";
+import { TwoFactorForm } from "./TwoFactorForm";
 
 export function SignIn() {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // Presente cuando la cuenta exige el segundo factor: { challengeToken, emailHint }.
+  const [challenge, setChallenge] = useState(null);
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
 
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-
-  const validationError =
-    validateRequired(userName, "El usuario") || validateRequired(password, "La contraseña");
-  if (validationError) {
-    setError(validationError);
-    return;
-  }
-  setLoading(true);
-
-  try {
-    // POST /auth/login solo responde { message: "<ROL>" } y deja la
-    // sesión real en una cookie httpOnly (no en el cuerpo), así que el
-    // objeto de usuario (nombre, userId, rol completo) se obtiene con una
-    // segunda llamada, la misma que ya usa AuthContext.verifySession().
-    await loginService(userName, password);
+  // POST /auth/login (o /auth/2fa/verify) solo deja la sesión en una cookie
+  // httpOnly, así que el usuario y su rol se obtienen con una segunda llamada,
+  // la misma que usa AuthContext.verifySession().
+  const completeLogin = async () => {
     const userDetails = await getUserDetails();
-
     login(userDetails);
 
-    // Redirigir según el rol real ya guardado en el contexto
-    const roleName = userDetails.role?.name || userDetails.role || '';
+    const roleName = userDetails.role?.name || userDetails.role || "";
     navigate(getHomeByRole(roleName ? [roleName] : []));
-      } catch (err) {
-        console.error("Error de login:", err);
-        setError(err.response?.data?.message || "Credenciales inválidas o error del servidor");
-      } finally {
-        setLoading(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    const validationError =
+      validateRequired(userName, "El usuario") || validateRequired(password, "La contraseña");
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setLoading(true);
+
+    try {
+      const result = await loginService(userName.trim(), password);
+      if (result.twoFactorRequired) {
+        setPassword("");
+        setChallenge({ challengeToken: result.challengeToken, emailHint: result.emailHint });
+        return;
       }
-    };
+      await completeLogin();
+    } catch (err) {
+      setError(err.response?.data?.message || "Credenciales inválidas o error del servidor");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelChallenge = () => {
+    setChallenge(null);
+    setError("");
+  };
 
   return (
     <section className="m-8 flex gap-4">
@@ -64,10 +77,20 @@ export function SignIn() {
             color="blue-gray"
             className="text-lg font-normal"
           >
-            Ingresa tu usuario y contraseña para continuar.
+            {challenge
+              ? "Verificación en dos pasos"
+              : "Ingresa tu usuario y contraseña para continuar."}
           </Typography>
         </div>
 
+        {challenge ? (
+          <TwoFactorForm
+            challengeToken={challenge.challengeToken}
+            emailHint={challenge.emailHint}
+            onVerified={completeLogin}
+            onCancel={cancelChallenge}
+          />
+        ) : (
         <form
           onSubmit={handleSubmit}
           className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2"
@@ -131,6 +154,7 @@ export function SignIn() {
             Sistema interno de Multiservicios Wilson. Si no tienes una cuenta, solicítala a un administrador.
           </Typography>
         </form>
+        )}
       </div>
 
       <div className="w-2/5 h-full hidden lg:block">
