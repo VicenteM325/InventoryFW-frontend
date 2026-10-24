@@ -99,7 +99,6 @@ export function Sales() {
         }))
       };
 
-      console.log('Enviando datos de venta:', saleData); // Debug
 
       await saleService.create(saleData);
       
