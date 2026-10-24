@@ -19,6 +19,17 @@ export const resendTwoFactor = async (challengeToken) => {
   return response.data;
 };
 
+// Siempre responde 200 con el mismo mensaje exista o no el correo.
+export const forgotPassword = async (email) => {
+  const response = await api.post('/auth/forgot-password', { email });
+  return response.data;
+};
+
+export const resetPassword = async (token, newPassword) => {
+  const response = await api.post('/auth/reset-password', { token, newPassword });
+  return response.data;
+};
+
 export const getUserDetails = async () => {
   const response = await api.get('/auth/user/details');
   return response.data;
@@ -33,6 +44,8 @@ export default {
   login,
   verifyTwoFactor,
   resendTwoFactor,
+  forgotPassword,
+  resetPassword,
   getUserDetails,
   logout,
 };
