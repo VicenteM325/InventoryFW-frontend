@@ -27,6 +27,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Pruebas unitarias
+        run: npm test
+
       # Toma VITE_API_URL=/ de .env.production (rutas relativas al proxy).
       - run: npm run build
 
