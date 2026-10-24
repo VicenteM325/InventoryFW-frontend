@@ -44,11 +44,12 @@ export function ForgotPassword() {
           </Typography>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
+        <form noValidate onSubmit={handleSubmit} className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
           <Input
             size="lg"
             type="email"
             label="Correo electrónico"
+            aria-label="Correo electrónico"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading || Boolean(message)}

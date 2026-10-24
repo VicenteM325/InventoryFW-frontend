@@ -168,22 +168,25 @@ export function Users() {
           <Typography variant="h6" color="blue-gray" className="mb-4">
             Nuevo usuario
           </Typography>
-          <form onSubmit={handleCreate} className="space-y-4">
+          <form noValidate onSubmit={handleCreate} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Input
                 label="Nombre completo"
+                aria-label="Nombre completo"
                 value={createForm.name}
                 onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                 error={Boolean(createErrors.name)}
               />
               <Input
                 label="Nombre de usuario"
+                aria-label="Nombre de usuario"
                 value={createForm.userName}
                 onChange={(e) => setCreateForm({ ...createForm, userName: e.target.value })}
                 error={Boolean(createErrors.userName)}
               />
               <Input
                 label="Correo (opcional; activa la verificación en dos pasos)"
+                aria-label="Correo (opcional; activa la verificación en dos pasos)"
                 type="email"
                 value={createForm.email}
                 onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
@@ -191,6 +194,7 @@ export function Users() {
               />
               <Input
                 label="Contraseña"
+                aria-label="Contraseña"
                 type="password"
                 value={createForm.password}
                 onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
@@ -198,6 +202,7 @@ export function Users() {
               />
               <Input
                 label="Confirmar contraseña"
+                aria-label="Confirmar contraseña"
                 type="password"
                 value={createForm.confirmPassword}
                 onChange={(e) => setCreateForm({ ...createForm, confirmPassword: e.target.value })}

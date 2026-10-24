@@ -61,12 +61,13 @@ export function ResetPassword() {
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
+          <form noValidate onSubmit={handleSubmit} className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
             <div className="flex flex-col gap-6">
               <Input
                 size="lg"
                 type="password"
                 label="Nueva contraseña"
+                aria-label="Nueva contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading || done}
@@ -75,6 +76,7 @@ export function ResetPassword() {
                 size="lg"
                 type="password"
                 label="Confirmar contraseña"
+                aria-label="Confirmar contraseña"
                 value={confirmation}
                 onChange={(e) => setConfirmation(e.target.value)}
                 disabled={loading || done}

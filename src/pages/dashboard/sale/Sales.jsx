@@ -141,6 +141,7 @@ export function Sales() {
           <div>
             <Input
               label="Nombre del cliente"
+              aria-label="Nombre del cliente"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               required
@@ -167,6 +168,7 @@ export function Sales() {
 
               <Input
                 label="Cantidad"
+                aria-label="Cantidad"
                 type="number"
                 min="1"
                 value={item.quantity}
@@ -176,6 +178,7 @@ export function Sales() {
               {/* El precio es el del catálogo: el servidor lo fija, no se edita aquí. */}
               <Input
                 label="Precio Unitario (catálogo)"
+                aria-label="Precio Unitario (catálogo)"
                 type="number"
                 value={item.unitPrice}
                 readOnly
