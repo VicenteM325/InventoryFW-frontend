@@ -28,7 +28,7 @@ const DETAIL_COLUMNS = [
     key: "products",
     header: "Productos",
     render: (s) => (
-      <span className="block max-w-xs truncate" title={s.products}>
+      <span className="block max-w-xs truncate xl:max-w-sm" title={s.products}>
         {s.products}
       </span>
     ),
@@ -202,34 +202,29 @@ export function SalesReport() {
             >
               <Chart {...dailyChart} />
             </Panel>
-            <Panel title="Productos más vendidos" subtitle="Por unidades">
-              {summary.topProducts.length === 0 ? (
-                <p className="py-16 text-center text-sm text-blue-gray-400">Sin ventas en el periodo</p>
-              ) : (
-                <Chart {...productsChart} />
-              )}
-            </Panel>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <Panel title="Ventas por empleado" subtitle="Ordenado por monto">
               <EmployeeRanking employees={summary.byEmployee} />
             </Panel>
-            <Panel
-              className="lg:col-span-2"
-              title="Detalle de ventas"
-              subtitle={`${formatInt(summary.sales.length)} en el periodo`}
-            >
-              <DataTable
-                columns={DETAIL_COLUMNS}
-                rows={summary.sales}
-                rowKey={(s) => s.id}
-                searchText={(s) => `${s.employee} ${s.customer} ${s.products}`}
-                searchPlaceholder="Buscar cliente, empleado o producto"
-                emptyText="No hay ventas que coincidan"
-              />
-            </Panel>
           </div>
+
+          <Panel title="Productos más vendidos" subtitle="Por unidades vendidas en el periodo">
+            {summary.topProducts.length === 0 ? (
+              <p className="py-16 text-center text-sm text-blue-gray-400">Sin ventas en el periodo</p>
+            ) : (
+              <Chart {...productsChart} />
+            )}
+          </Panel>
+
+          <Panel title="Detalle de ventas" subtitle={`${formatInt(summary.sales.length)} en el periodo`}>
+            <DataTable
+              columns={DETAIL_COLUMNS}
+              rows={summary.sales}
+              rowKey={(s) => s.id}
+              searchText={(s) => `${s.employee} ${s.customer} ${s.products}`}
+              searchPlaceholder="Buscar cliente, empleado o producto"
+              emptyText="No hay ventas que coincidan"
+            />
+          </Panel>
         </div>
       )}
     </div>
