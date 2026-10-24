@@ -73,6 +73,7 @@ export function TwoFactorForm({ challengeToken, emailHint, onVerified, onCancel 
       <Input
         size="lg"
         label="Código de verificación"
+        aria-label="Código de verificación"
         inputMode="numeric"
         autoComplete="one-time-code"
         maxLength={6}

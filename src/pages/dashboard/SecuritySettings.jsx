@@ -135,18 +135,20 @@ export function SecuritySettings({ email, twoFactorEnabled, onChanged }) {
           Seguridad de la cuenta
         </Typography>
 
-        <form onSubmit={handleEmail} className="space-y-3">
+        <form noValidate onSubmit={handleEmail} className="space-y-3">
           <Typography variant="small" className="font-semibold text-blue-gray-700">
             Correo electrónico
           </Typography>
           <Input
             label="Correo"
+            aria-label="Correo"
             type="email"
             value={emailForm.email}
             onChange={(e) => setEmailForm({ ...emailForm, email: e.target.value })}
           />
           <Input
             label="Contraseña actual"
+            aria-label="Contraseña actual"
             type="password"
             value={emailForm.currentPassword}
             onChange={(e) => setEmailForm({ ...emailForm, currentPassword: e.target.value })}
@@ -171,12 +173,13 @@ export function SecuritySettings({ email, twoFactorEnabled, onChanged }) {
           </div>
 
           {twoFactorEnabled ? (
-            <form onSubmit={handleDisable} className="space-y-3">
+            <form noValidate onSubmit={handleDisable} className="space-y-3">
               <Typography variant="small" className="text-blue-gray-500">
                 Al iniciar sesión se pedirá un código enviado a {email}.
               </Typography>
               <Input
                 label="Contraseña actual"
+                aria-label="Contraseña actual"
                 type="password"
                 value={disablePassword}
                 onChange={(e) => setDisablePassword(e.target.value)}
@@ -186,9 +189,10 @@ export function SecuritySettings({ email, twoFactorEnabled, onChanged }) {
               </Button>
             </form>
           ) : codeSent ? (
-            <form onSubmit={handleConfirm} className="space-y-3">
+            <form noValidate onSubmit={handleConfirm} className="space-y-3">
               <Input
                 label="Código recibido por correo"
+                aria-label="Código recibido por correo"
                 inputMode="numeric"
                 maxLength={6}
                 value={code}
@@ -218,24 +222,27 @@ export function SecuritySettings({ email, twoFactorEnabled, onChanged }) {
           <Feedback {...twoFactorFeedback} />
         </div>
 
-        <form onSubmit={handlePassword} className="space-y-3">
+        <form noValidate onSubmit={handlePassword} className="space-y-3">
           <Typography variant="small" className="font-semibold text-blue-gray-700">
             Cambiar contraseña
           </Typography>
           <Input
             label="Contraseña actual"
+            aria-label="Contraseña actual"
             type="password"
             value={passwordForm.current}
             onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
           />
           <Input
             label="Nueva contraseña"
+            aria-label="Nueva contraseña"
             type="password"
             value={passwordForm.next}
             onChange={(e) => setPasswordForm({ ...passwordForm, next: e.target.value })}
           />
           <Input
             label="Confirmar nueva contraseña"
+            aria-label="Confirmar nueva contraseña"
             type="password"
             value={passwordForm.confirm}
             onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}

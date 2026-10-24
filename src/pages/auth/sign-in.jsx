@@ -106,6 +106,7 @@ export function SignIn() {
             <Input
               size="lg"
               placeholder="admin"
+              aria-label="Usuario"
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               className="!border-t-blue-gray-200 focus:!border-t-gray-900"
@@ -126,6 +127,7 @@ export function SignIn() {
               type="password"
               size="lg"
               placeholder="********"
+              aria-label="Contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="!border-t-blue-gray-200 focus:!border-t-gray-900"
