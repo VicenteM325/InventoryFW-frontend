@@ -10,6 +10,7 @@ import {
   Option,
 } from "@material-tailwind/react";
 import { productService } from "@/services/productService";
+import { ScanButton } from "@/components/ScanButton";
 import { supplierService } from "@/services/supplierService";
 
 const EMPTY_FORM = {
@@ -54,6 +55,13 @@ export function CreateProduct() {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+  };
+
+  // Código leído por la cámara: rellena el campo y limpia su error.
+  const handleScannedBarcode = (code) => {
+    setFormData((prev) => ({ ...prev, barcode: code }));
+    setErrors((prev) => ({ ...prev, barcode: undefined }));
+    return { ok: true, message: `Código leído: ${code}` };
   };
 
   const handleSubmit = async (e) => {
@@ -101,13 +109,18 @@ export function CreateProduct() {
             </div>
 
             <div>
-              <Input
-                label="Código de barras"
-                name="barcode"
-                value={formData.barcode}
-                onChange={handleChange}
-                error={!!errors.barcode}
-              />
+              <div className="flex items-start gap-2">
+                <div className="min-w-0 flex-1">
+                <Input
+                  label="Código de barras"
+                  name="barcode"
+                  value={formData.barcode}
+                  onChange={handleChange}
+                  error={!!errors.barcode}
+                />
+                </div>
+                <ScanButton title="Escanear código del producto" onDetected={handleScannedBarcode} />
+              </div>
               {errors.barcode && (
                 <Typography variant="small" color="red" className="mt-1">
                   {errors.barcode}

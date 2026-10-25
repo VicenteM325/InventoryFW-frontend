@@ -45,3 +45,22 @@ legible) y eje con 2.5 / 7.5 en el gráfico de conteos del PDF (ahora enteros).
 
 Limitación conocida: entre 1024 y 1366 px de ancho la tabla de detalle muestra un scroll
 horizontal interno (no se corta contenido).
+
+---
+
+# Escáner de códigos de barras con la cámara (2026-10-24)
+
+Chromium (Playwright) con una **cámara simulada** que reproduce un EAN-13 válido (3 s a la vista,
+2 s apartado, en bucle). **18 de 18 comprobaciones pasaron.** Backend y PostgreSQL reales.
+
+| Pantalla | Verificado |
+|---|---|
+| Venta (modo continuo) | lee el código y agrega el producto; mantenerlo a la vista no lo suma otra vez; apartarlo y volver a mostrarlo suma 1; una tercera pasada se bloquea por stock; código inexistente avisa; la entrada manual funciona; quedan las filas y cantidades correctas |
+| Productos | tras leer, el diálogo se cierra, el buscador queda con el código y la lista se filtra a 1 producto |
+| Crear producto | el campo "Código de barras" queda con el código leído |
+| Cámara | al cerrar el diálogo todas las pistas del stream quedan en `ended` (la luz se apaga) |
+| Sin cámara | mensaje claro y entrada manual disponible |
+
+No se probó con una cámara física de celular ni en iOS Safari. La cámara exige HTTPS o localhost:
+en Netlify funciona; abriendo el servidor de desarrollo por la IP de la red local (HTTP) el
+navegador la bloquea y el diálogo lo explica.
