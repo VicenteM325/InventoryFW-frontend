@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { notificationService } from '@/services/notificationService';
+import { NOTIFICATIONS_CHANGED } from '@/utils/notificationEvents';
 
-const POLL_MS = 60_000;
+// Evita pedirlas dos veces seguidas: al volver a la pestaña se disparan "focus" y "visibilitychange".
+const MIN_FOCUS_REFRESH_MS = 5000;
 
-/** Notificaciones sin leer del usuario, refrescadas cada minuto. */
+/**
+ * Notificaciones sin leer del usuario. Se cargan al abrir el panel, se vuelven a pedir cuando
+ * una acción las genera (ver notifyNotificationsChanged) y cuando el usuario regresa a la
+ * pestaña, que es cuando pudo haber notificaciones nuevas de otras personas. Sin consultas periódicas.
+ */
 export default function useNotifications() {
   const [notifications, setNotifications] = useState([]);
 
@@ -17,8 +23,22 @@ export default function useNotifications() {
 
   useEffect(() => {
     refresh();
-    const timer = setInterval(refresh, POLL_MS);
-    return () => clearInterval(timer);
+    let lastFocusRefresh = Date.now();
+    const refreshOnReturn = () => {
+      if (document.visibilityState === 'hidden') return;
+      const now = Date.now();
+      if (now - lastFocusRefresh < MIN_FOCUS_REFRESH_MS) return;
+      lastFocusRefresh = now;
+      refresh();
+    };
+    window.addEventListener(NOTIFICATIONS_CHANGED, refresh);
+    window.addEventListener('focus', refreshOnReturn);
+    document.addEventListener('visibilitychange', refreshOnReturn);
+    return () => {
+      window.removeEventListener(NOTIFICATIONS_CHANGED, refresh);
+      window.removeEventListener('focus', refreshOnReturn);
+      document.removeEventListener('visibilitychange', refreshOnReturn);
+    };
   }, [refresh]);
 
   const markAsRead = useCallback(async (id) => {

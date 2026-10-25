@@ -1,4 +1,5 @@
 import api from './api';
+import { notifyNotificationsChanged } from '@/utils/notificationEvents';
 
 const API_URL = '/api/products';
 
@@ -7,6 +8,13 @@ export const productService = {
   getById: (id) => api.get(`${API_URL}/${id}`).then(res => res.data),
   create: (data) => api.post(API_URL, data).then(res => res.data),
   update: (id, data) => api.put(`${API_URL}/${id}`, data).then(res => res.data),
-  delete: (id) => api.delete(`${API_URL}/${id}`),
-  activate: (id) => api.patch(`${API_URL}/${id}/activate`).then(res => res.data),
+  // Activar o desactivar un producto genera una notificación: se avisa a la campana.
+  delete: (id) => api.delete(`${API_URL}/${id}`).then((res) => {
+    notifyNotificationsChanged();
+    return res;
+  }),
+  activate: (id) => api.patch(`${API_URL}/${id}/activate`).then(res => {
+    notifyNotificationsChanged();
+    return res.data;
+  }),
 };

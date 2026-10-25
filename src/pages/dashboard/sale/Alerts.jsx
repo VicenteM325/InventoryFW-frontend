@@ -58,6 +58,9 @@ export function Alerts() {
     setOrderingAlert(null);
   };
 
+  // Sin proveedor no hay a quién pedirle, así que se puede marcar directamente.
+  const canMarkAttended = (alert) => !alert.supplierId || Boolean(alert.orderedAt);
+
   const getAlertColor = (stock) => {
     if (stock <= 5) return 'red';
     if (stock <= 10) return 'orange';
@@ -140,13 +143,15 @@ export function Alerts() {
                         </Button>
                       )
                     )}
+                    {/* Con proveedor asociado, solo se marca como atendido tras enviarle el pedido. */}
                     <Button
                       color="green"
                       size="sm"
                       onClick={() => handleAttend(alert.stockAlertId)}
-                      disabled={processing === alert.stockAlertId}
+                      disabled={processing === alert.stockAlertId || !canMarkAttended(alert)}
+                      title={canMarkAttended(alert) ? undefined : 'Primero envía el pedido al proveedor'}
                     >
-                      {processing === alert.stockAlertId ? 'Procesando...' : 'Atender'}
+                      {processing === alert.stockAlertId ? 'Procesando...' : 'Atendido'}
                     </Button>
                   </div>
                 )}
