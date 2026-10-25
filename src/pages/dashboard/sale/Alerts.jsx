@@ -9,12 +9,16 @@ import {
 import { stockAlertService } from "@/services/stockAlertService";
 import { AuthContext } from "@/context/AuthContext";
 import { useFeedback } from "@/context/FeedbackContext";
+import { SupplierOrderDialog } from "@/components/SupplierOrderDialog";
+import { hasPlaceholderEmail } from "@/utils/supplier";
+import { Link } from "react-router-dom";
 
 export function Alerts() {
   const { toast } = useFeedback();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
+  const [orderingAlert, setOrderingAlert] = useState(null);
   const { roles } = useContext(AuthContext);
   
   const isAdmin = roles?.includes('ADMIN') || roles?.includes('ROLE_ADMIN');
@@ -46,6 +50,12 @@ export function Alerts() {
     } finally {
       setProcessing(null);
     }
+  };
+
+  // Tras enviar el pedido la tarjeta pasa a mostrar "Pedido enviado".
+  const handleOrderSent = (updated) => {
+    setAlerts((current) => current.map((a) => (a.stockAlertId === updated.stockAlertId ? updated : a)));
+    setOrderingAlert(null);
   };
 
   const getAlertColor = (stock) => {
@@ -106,22 +116,50 @@ export function Alerts() {
                   <Typography variant="small" color="gray" className="mt-2">
                     Creada: {new Date(alert.createdAt).toLocaleString()}
                   </Typography>
+                  <Typography variant="small" color="gray">
+                    Proveedor: {alert.supplierName || 'sin proveedor asociado'}
+                  </Typography>
+                  {alert.orderedAt && (
+                    <Typography variant="small" className="mt-1 font-medium text-green-700">
+                      Pedido enviado: {alert.orderedQuantity} unidades el {new Date(alert.orderedAt).toLocaleString()}
+                    </Typography>
+                  )}
                 </div>
                 {isAdmin && (
-                  <Button
-                    color="green"
-                    size="sm"
-                    onClick={() => handleAttend(alert.stockAlertId)}
-                    disabled={processing === alert.stockAlertId}
-                  >
-                    {processing === alert.stockAlertId ? 'Procesando...' : 'Atender'}
-                  </Button>
+                  <div className="flex flex-col items-stretch gap-2">
+                    {alert.supplierId && (
+                      hasPlaceholderEmail(alert.supplierEmail) ? (
+                        <Link to="/dashboard/suppliers">
+                          <Button variant="outlined" color="amber" size="sm" fullWidth>
+                            Completar correo del proveedor
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Button variant="outlined" color="blue" size="sm" onClick={() => setOrderingAlert(alert)}>
+                          Pedir al proveedor
+                        </Button>
+                      )
+                    )}
+                    <Button
+                      color="green"
+                      size="sm"
+                      onClick={() => handleAttend(alert.stockAlertId)}
+                      disabled={processing === alert.stockAlertId}
+                    >
+                      {processing === alert.stockAlertId ? 'Procesando...' : 'Atender'}
+                    </Button>
+                  </div>
                 )}
               </div>
             </Card>
           ))}
         </div>
       )}
+      <SupplierOrderDialog
+        alert={orderingAlert}
+        onClose={() => setOrderingAlert(null)}
+        onSent={handleOrderSent}
+      />
     </div>
   );
 }

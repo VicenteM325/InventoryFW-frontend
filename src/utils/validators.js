@@ -27,6 +27,17 @@ export function validateEmail(value, { optional = false } = {}) {
   return EMAIL_REGEX.test(email) ? '' : 'El correo electrónico no es válido';
 }
 
+// Mismas reglas que el backend (SupplierRequestDto): 8 a 20 caracteres entre números, espacios, +, -, ( y ).
+const PHONE_REGEX = /^[0-9+()\- ]{8,20}$/;
+
+export function validatePhone(value) {
+  const phone = String(value ?? '').trim();
+  if (!phone) return 'El teléfono es obligatorio';
+  return PHONE_REGEX.test(phone)
+    ? ''
+    : 'El teléfono debe tener entre 8 y 20 caracteres: números, espacios, +, - o paréntesis';
+}
+
 export function validatePassword(value) {
   if (!value) return 'La contraseña es obligatoria';
   return PASSWORD_REGEX.test(value)

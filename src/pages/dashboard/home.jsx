@@ -91,7 +91,7 @@ export function Home() {
               Alertas de reposición de inventario
             </Typography>
             <Typography variant="small" color="gray">
-              Generadas automáticamente cuando el stock cae por debajo del mínimo
+              Generadas automáticamente cuando el stock llega al mínimo o menos
             </Typography>
           </CardHeader>
           <CardBody className="pt-0">
