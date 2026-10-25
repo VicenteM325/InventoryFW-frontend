@@ -3,6 +3,7 @@ import {
   Card,
   Typography,
   Button,
+  Chip,
   Input,
   IconButton,
   Tooltip,
@@ -12,10 +13,29 @@ import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { supplierService } from "@/services/supplierService";
 import { AuthContext } from "@/context/AuthContext";
 import { useFeedback } from "@/context/FeedbackContext";
+import { validateEmail, validatePhone, validateRequired } from "@/utils/validators";
+import { hasPlaceholderEmail, hasPlaceholderPhone } from "@/utils/supplier";
 
-const TABLE_HEAD = ['Nombre', 'Contacto', 'Teléfono', 'Acciones'];
+const TABLE_HEAD = ['Nombre', 'Persona de contacto', 'Correo', 'Teléfono', 'Acciones'];
 
-const EMPTY_CREATE_FORM = { name: '', contactName: '', phone: '' };
+const EMPTY_CREATE_FORM = { name: '', contactName: '', email: '', phone: '' };
+
+// El correo y el teléfono son obligatorios: el correo se usa para pedirle producto al proveedor.
+function validateSupplierForm(form) {
+  return (
+    validateRequired(form.name, 'El nombre del proveedor') ||
+    validateEmail(form.email) ||
+    validatePhone(form.phone)
+  );
+}
+
+const trimmed = (form) => ({
+  ...form,
+  name: form.name.trim(),
+  contactName: form.contactName.trim(),
+  email: form.email.trim(),
+  phone: form.phone.trim(),
+});
 
 export function Suppliers() {
   const { confirm } = useFeedback();
@@ -50,10 +70,15 @@ export function Suppliers() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    const formError = validateSupplierForm(createForm);
+    if (formError) {
+      setError(formError);
+      return;
+    }
     setSaving(true);
     setError('');
     try {
-      await supplierService.create(createForm);
+      await supplierService.create(trimmed(createForm));
       setCreateForm(EMPTY_CREATE_FORM);
       setShowCreateForm(false);
       await fetchSuppliers();
@@ -69,15 +94,22 @@ export function Suppliers() {
     setEditForm({
       name: supplier.name,
       contactName: supplier.contactName || '',
-      phone: supplier.phone || '',
+      // Los valores provisionales de la migración se dejan vacíos para obligar a escribir los reales.
+      email: hasPlaceholderEmail(supplier.email) ? '' : supplier.email || '',
+      phone: hasPlaceholderPhone(supplier.phone) ? '' : supplier.phone || '',
     });
   };
 
   const handleUpdate = async (supplierId) => {
+    const formError = validateSupplierForm(editForm);
+    if (formError) {
+      setError(formError);
+      return;
+    }
     setSaving(true);
     setError('');
     try {
-      await supplierService.update(supplierId, editForm);
+      await supplierService.update(supplierId, trimmed(editForm));
       setEditingSupplierId(null);
       await fetchSuppliers();
     } catch (err) {
@@ -146,7 +178,7 @@ export function Suppliers() {
             Nuevo proveedor
           </Typography>
           <form onSubmit={handleCreate} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Input
                 label="Nombre del proveedor"
                 value={createForm.name}
@@ -154,14 +186,23 @@ export function Suppliers() {
                 required
               />
               <Input
-                label="Contacto (opcional)"
+                label="Persona de contacto (opcional)"
                 value={createForm.contactName}
                 onChange={(e) => setCreateForm({ ...createForm, contactName: e.target.value })}
               />
               <Input
-                label="Teléfono (opcional)"
+                type="email"
+                label="Correo (para pedidos)"
+                value={createForm.email}
+                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                required
+              />
+              <Input
+                label="Teléfono"
+                inputMode="tel"
                 value={createForm.phone}
                 onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                required
               />
             </div>
             <div className="flex justify-end gap-4">
@@ -221,12 +262,32 @@ export function Suppliers() {
                   <td className="p-4">
                     {isEditing ? (
                       <Input
+                        type="email"
+                        label="Correo"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      />
+                    ) : hasPlaceholderEmail(supplier.email) ? (
+                      <Chip value="Falta el correo" color="amber" size="sm" />
+                    ) : (
+                      <Typography variant="small" color="blue-gray">
+                        {supplier.email}
+                      </Typography>
+                    )}
+                  </td>
+                  <td className="p-4">
+                    {isEditing ? (
+                      <Input
+                        label="Teléfono"
+                        inputMode="tel"
                         value={editForm.phone}
                         onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                       />
+                    ) : hasPlaceholderPhone(supplier.phone) ? (
+                      <Chip value="Falta el teléfono" color="amber" size="sm" />
                     ) : (
                       <Typography variant="small" color="blue-gray">
-                        {supplier.phone || '-'}
+                        {supplier.phone}
                       </Typography>
                     )}
                   </td>

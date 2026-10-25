@@ -5,6 +5,7 @@ import {
   validateEmail,
   validatePassword,
   validatePasswordConfirmation,
+  validatePhone,
   validateQuantity,
   validateRequired,
   validateUserName,
@@ -96,5 +97,20 @@ describe('validateQuantity', () => {
 describe('collectErrors', () => {
   it('devuelve solo los campos con error', () => {
     expect(collectErrors({ a: '', b: 'mal', c: '', d: 'peor' })).toEqual({ b: 'mal', d: 'peor' });
+  });
+});
+
+describe('validatePhone', () => {
+  it('acepta números con separadores', () => {
+    expect(validatePhone('5555-1234')).toBe('');
+    expect(validatePhone('+502 5555 1234')).toBe('');
+    expect(validatePhone('(502) 55551234')).toBe('');
+  });
+
+  it('rechaza vacío, corto o con letras', () => {
+    expect(validatePhone('')).toBe('El teléfono es obligatorio');
+    expect(validatePhone('   ')).toBe('El teléfono es obligatorio');
+    expect(validatePhone('1234')).not.toBe('');
+    expect(validatePhone('5555-abcd')).not.toBe('');
   });
 });
