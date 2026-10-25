@@ -67,7 +67,7 @@ export function CreateProduct() {
         price: parseFloat(formData.price),
         supplierId: formData.supplierId ? parseInt(formData.supplierId) : null,
       });
-      navigate('/products');
+      navigate('/dashboard/products');
     } catch (error) {
       console.error('Error creating product:', error);
       alert(error.response?.data?.message || 'Error al crear el producto');
@@ -211,7 +211,7 @@ export function CreateProduct() {
             <Button
               variant="text"
               color="blue-gray"
-              onClick={() => navigate('/products')}
+              onClick={() => navigate('/dashboard/products')}
             >
               Cancelar
             </Button>

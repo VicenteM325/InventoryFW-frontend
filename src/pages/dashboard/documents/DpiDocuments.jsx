@@ -10,6 +10,7 @@ import {
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { documentService } from "@/services/documentService";
 import { downloadBlob, printBlob, extractErrorMessage } from "@/utils/fileDownload";
+import { downscaleImage } from "@/utils/imageDownscale";
 import { useCornerAdjustment } from "@/hooks/useCornerAdjustment";
 import { CornerAdjustOverlay } from "@/components/CornerAdjustOverlay";
 
@@ -178,16 +179,21 @@ export function DpiDocuments() {
   const frontPreview = useProcessedPreview(front, 'front', frontRotation, settings, frontCornerAdjustment.activeCorners);
   const backPreview = useProcessedPreview(back, 'back', backRotation, settings, backCornerAdjustment.activeCorners);
 
-  const handleFrontChange = (file) => {
-    setFront(file);
-    setFrontRawPreview(file ? URL.createObjectURL(file) : null);
+  // La foto se reduce una sola vez al elegirla: detección, vista previa y
+  // generación usan ese mismo archivo, así las esquinas ajustadas a mano
+  // siguen correspondiendo a la imagen con la que se genera el documento.
+  const handleFrontChange = async (file) => {
+    const prepared = file ? await downscaleImage(file) : null;
+    setFront(prepared);
+    setFrontRawPreview(prepared ? URL.createObjectURL(prepared) : null);
     setFrontRotation(0);
     setResult(null);
   };
 
-  const handleBackChange = (file) => {
-    setBack(file);
-    setBackRawPreview(file ? URL.createObjectURL(file) : null);
+  const handleBackChange = async (file) => {
+    const prepared = file ? await downscaleImage(file) : null;
+    setBack(prepared);
+    setBackRawPreview(prepared ? URL.createObjectURL(prepared) : null);
     setBackRotation(0);
     setResult(null);
   };

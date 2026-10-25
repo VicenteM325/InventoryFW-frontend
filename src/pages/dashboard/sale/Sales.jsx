@@ -10,6 +10,7 @@ import {
 } from "@material-tailwind/react";
 import { saleService } from "@/services/saleService";
 import { productService } from "@/services/productService";
+import { validateQuantity, validateRequired } from "@/utils/validators";
 
 export function Sales() {
   const [products, setProducts] = useState([]);
@@ -65,41 +66,44 @@ export function Sales() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!customerName.trim()) {
-      alert('Por favor ingresa el nombre del cliente');
+    const customerError = validateRequired(customerName, 'El nombre del cliente');
+    if (customerError) {
+      alert(customerError);
       return;
     }
-    
-    // Validar que todos los items tengan producto y precio
+
+    // Stock pedido por producto (el mismo producto puede repetirse en varias filas).
+    const requested = {};
     for (let i = 0; i < items.length; i++) {
       if (!items[i].productId) {
         alert(`Por favor selecciona un producto para la fila ${i + 1}`);
         return;
       }
-      if (!items[i].unitPrice || items[i].unitPrice <= 0) {
-        alert(`Por favor ingresa el precio unitario para el producto ${i + 1}`);
+      const productId = parseInt(items[i].productId);
+      const product = products.find((p) => p.productId === productId);
+      if (!product || !product.active) {
+        alert(`El producto de la fila ${i + 1} no está disponible para la venta`);
+        return;
+      }
+      requested[productId] = (requested[productId] || 0) + Number(items[i].quantity);
+      const quantityError = validateQuantity(items[i].quantity, product.stock - (requested[productId] - Number(items[i].quantity)));
+      if (quantityError) {
+        alert(`Fila ${i + 1} (${product.name}): ${quantityError}`);
         return;
       }
     }
 
     setSubmitting(true);
     try {
-      // Calcular el total de la venta
-      const total = items.reduce((sum, item) => {
-        return sum + (item.unitPrice * item.quantity);
-      }, 0);
-
+      // El precio y el total los calcula el servidor con el precio vigente del
+      // producto; aquí solo se envían producto y cantidad.
       const saleData = {
-        customerName,
-        total: total,
+        customerName: customerName.trim(),
         items: items.map(item => ({
           productId: parseInt(item.productId),
-          quantity: parseInt(item.quantity),
-          unitPrice: parseFloat(item.unitPrice)
+          quantity: parseInt(item.quantity)
         }))
       };
-
-      console.log('Enviando datos de venta:', saleData); // Debug
 
       await saleService.create(saleData);
       
@@ -137,6 +141,7 @@ export function Sales() {
           <div>
             <Input
               label="Nombre del cliente"
+              aria-label="Nombre del cliente"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               required
@@ -154,7 +159,7 @@ export function Sales() {
                 value={item.productId}
                 onChange={(value) => updateItem(index, 'productId', value)}
               >
-                {products.map((product) => (
+                {products.filter((p) => p.active).map((product) => (
                   <Option key={product.productId} value={product.productId.toString()}>
                     {product.name} (Stock: {product.stock})
                   </Option>
@@ -163,20 +168,21 @@ export function Sales() {
 
               <Input
                 label="Cantidad"
+                aria-label="Cantidad"
                 type="number"
                 min="1"
                 value={item.quantity}
                 onChange={(e) => updateItem(index, 'quantity', e.target.value)}
               />
 
+              {/* El precio es el del catálogo: el servidor lo fija, no se edita aquí. */}
               <Input
-                label="Precio Unitario"
+                label="Precio Unitario (catálogo)"
+                aria-label="Precio Unitario (catálogo)"
                 type="number"
-                min="0.01"
-                step="0.01"
                 value={item.unitPrice}
-                onChange={(e) => updateItem(index, 'unitPrice', e.target.value)}
-                required
+                readOnly
+                disabled
               />
 
               <div className="flex items-center gap-2">

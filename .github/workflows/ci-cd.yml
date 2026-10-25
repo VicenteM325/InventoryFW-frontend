@@ -1,0 +1,87 @@
+name: CI/CD Frontend
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+# Una corrida por rama a la vez; en PRs se cancela la anterior si llega un
+# push nuevo. Los push a main nunca se cancelan a mitad de un deploy.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Pruebas unitarias
+        run: npm test
+
+      # Toma VITE_API_URL=/ de .env.production (rutas relativas al proxy).
+      - run: npm run build
+
+      # El proxy al backend viaja dentro del build (public/_redirects).
+      - name: Verificar el proxy a Railway
+        run: |
+          if grep -q "TU-BACKEND" dist/_redirects; then
+            echo "::error file=public/_redirects::Reemplaza TU-BACKEND.up.railway.app por el dominio del backend en Railway"
+            exit 1
+          fi
+          grep -qE '^/api/\*[[:space:]]+https://[^[:space:]]+/api/:splat[[:space:]]+200!' dist/_redirects
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist
+          retention-days: 7
+
+  deploy:
+    name: Deploy a Netlify
+    needs: ci
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # --no-build: el sitio ya se construyó en el job de CI.
+      - name: Publicar en producción
+        run: >-
+          npx --yes netlify-cli@27.13.0 deploy
+          --prod --no-build --dir dist
+          --site "$NETLIFY_SITE_ID" --auth "$NETLIFY_AUTH_TOKEN"
+          --message "$GITHUB_SHA"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+      # /auth/user/details sin sesión solo puede responder 401 desde el
+      # backend: si el proxy fallara, el fallback del SPA devolvería 200.
+      - name: Smoke test (SPA + proxy al backend)
+        run: |
+          curl -fsS -o /dev/null "$FRONTEND_URL/auth/sign-in"
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$FRONTEND_URL/auth/user/details")
+          echo "GET /auth/user/details -> $code"
+          test "$code" = "401"

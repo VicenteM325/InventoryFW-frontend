@@ -12,7 +12,6 @@ import {
 } from "@material-tailwind/react";
 import {
   PencilIcon,
-  EyeIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
 import { productService } from "@/services/productService";
@@ -183,15 +182,6 @@ export function Products() {
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
-                      <Tooltip content="Ver detalles">
-                        <IconButton
-                          variant="text"
-                          color="blue-gray"
-                          onClick={() => navigate(`/products/${product.productId}`)}
-                        >
-                          <EyeIcon className="h-4 w-4" />
-                        </IconButton>
-                      </Tooltip>
                       <Tooltip content="Editar">
                         <IconButton
                           variant="text"

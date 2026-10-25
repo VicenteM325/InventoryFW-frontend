@@ -1,0 +1,9 @@
+# Los archivos que genera Vite en /assets llevan un hash en el nombre y
+# nunca cambian: el navegador puede guardarlos sin volver a preguntar.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin

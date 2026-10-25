@@ -12,7 +12,7 @@ import {
   TruckIcon,
 } from "@heroicons/react/24/solid";
 import { Home, Profile } from "@/pages/dashboard";
-import { SignIn } from "@/pages/auth";
+import { SignIn, ForgotPassword, ResetPassword } from "@/pages/auth";
 import { Products, CreateProduct, EditProduct } from "@/pages/dashboard/product";
 import { Sales, Alerts } from "@/pages/dashboard/sale";
 import { DpiDocuments } from "@/pages/dashboard/documents";
@@ -119,6 +119,19 @@ export const routes = [
         name: "sign in",
         path: "/sign-in",
         element: <SignIn />,
+      },
+      {
+        icon: <ServerStackIcon {...icon} />,
+        name: "forgot password",
+        path: "/forgot",
+        element: <ForgotPassword />,
+      },
+      {
+        // /auth/reset es la página del SPA; /auth/reset-password es el endpoint POST del API.
+        icon: <ServerStackIcon {...icon} />,
+        name: "reset password",
+        path: "/reset",
+        element: <ResetPassword />,
       },
     ],
   },
