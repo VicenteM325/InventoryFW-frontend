@@ -17,6 +17,7 @@ import { ExportButtons } from "./components/ExportButtons";
 import { DataTable } from "./components/DataTable";
 import { Panel } from "./components/Panel";
 import { stockStatusChart } from "./chartConfigs";
+import { useMaterialTailwindController } from "@/context";
 
 // Colores con contraste suficiente (texto oscuro sobre fondo claro); el chip "ghost" de
 // Material Tailwind deja el texto casi invisible.
@@ -52,6 +53,7 @@ const PRODUCT_COLUMNS = [
 ];
 
 export function InventoryReport() {
+  const [{ darkMode }] = useMaterialTailwindController();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -75,7 +77,7 @@ export function InventoryReport() {
     };
   }, []);
 
-  const statusChart = useMemo(() => (summary ? stockStatusChart(summary) : null), [summary]);
+  const statusChart = useMemo(() => (summary ? stockStatusChart(summary, darkMode) : null), [summary, darkMode]);
   const needsAttention = useMemo(
     () => (summary ? summary.products.filter((p) => p.status !== "DISPONIBLE") : []),
     [summary]
@@ -152,7 +154,7 @@ export function InventoryReport() {
               {summary.totalProducts === 0 ? (
                 <p className="py-16 text-center text-sm text-blue-gray-400">No hay productos activos</p>
               ) : (
-                <Chart {...statusChart} />
+                <Chart key={darkMode ? "dark" : "light"} {...statusChart} />
               )}
             </Panel>
             <Panel

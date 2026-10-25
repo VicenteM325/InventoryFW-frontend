@@ -17,6 +17,7 @@ import { ExportButtons } from "./components/ExportButtons";
 import { DataTable } from "./components/DataTable";
 import { Panel } from "./components/Panel";
 import { dailySalesChart, topProductsChart } from "./chartConfigs";
+import { useMaterialTailwindController } from "@/context";
 
 const DEFAULT_RANGE = presetRanges().find((p) => p.id === "30d");
 
@@ -76,6 +77,7 @@ function EmployeeRanking({ employees }) {
 }
 
 export function SalesReport() {
+  const [{ darkMode }] = useMaterialTailwindController();
   const [range, setRange] = useState({ from: DEFAULT_RANGE.from, to: DEFAULT_RANGE.to });
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -107,8 +109,8 @@ export function SalesReport() {
     };
   }, [range.from, range.to, rangeError]);
 
-  const dailyChart = useMemo(() => (summary ? dailySalesChart(summary.byDay) : null), [summary]);
-  const productsChart = useMemo(() => (summary ? topProductsChart(summary.topProducts) : null), [summary]);
+  const dailyChart = useMemo(() => (summary ? dailySalesChart(summary.byDay, darkMode) : null), [summary, darkMode]);
+  const productsChart = useMemo(() => (summary ? topProductsChart(summary.topProducts, darkMode) : null), [summary, darkMode]);
 
   const current = summary?.current;
   const previousLabel = summary
@@ -200,7 +202,7 @@ export function SalesReport() {
               title="Ventas por día"
               subtitle={`${formatDate(summary.from)} al ${formatDate(summary.to)}`}
             >
-              <Chart {...dailyChart} />
+              <Chart key={darkMode ? "dark" : "light"} {...dailyChart} />
             </Panel>
             <Panel title="Ventas por empleado" subtitle="Ordenado por monto">
               <EmployeeRanking employees={summary.byEmployee} />
@@ -211,7 +213,7 @@ export function SalesReport() {
             {summary.topProducts.length === 0 ? (
               <p className="py-16 text-center text-sm text-blue-gray-400">Sin ventas en el periodo</p>
             ) : (
-              <Chart {...productsChart} />
+              <Chart key={darkMode ? "dark" : "light"} {...productsChart} />
             )}
           </Panel>
 

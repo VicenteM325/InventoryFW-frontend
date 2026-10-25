@@ -1,10 +1,11 @@
-import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, MoonIcon, SunIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { IconButton, Typography } from "@material-tailwind/react";
 import {
   useMaterialTailwindController,
   setOpenConfigurator,
   setSidenavColor,
   setSidenavType,
+  setDarkMode,
 } from "@/context";
 
 const SIDENAV_COLORS = [
@@ -24,7 +25,7 @@ const SIDENAV_TYPES = [
 
 export function Configurator() {
   const [controller, dispatch] = useMaterialTailwindController();
-  const { openConfigurator, sidenavColor, sidenavType } = controller;
+  const { openConfigurator, sidenavColor, sidenavType, darkMode } = controller;
   const close = () => setOpenConfigurator(dispatch, false);
 
   return (
@@ -54,6 +55,39 @@ export function Configurator() {
           <IconButton variant="text" color="blue-gray" aria-label="Cerrar configuración" onClick={close}>
             <XMarkIcon strokeWidth={2.5} className="h-5 w-5" />
           </IconButton>
+        </div>
+
+        <div className="border-t border-blue-gray-50 px-2 py-6">
+          <Typography variant="h6" color="blue-gray">
+            Modo
+          </Typography>
+          <Typography variant="small" className="font-normal text-blue-gray-600">
+            Apariencia de toda la aplicación.
+          </Typography>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            {[
+              { value: false, label: "Claro", Icon: SunIcon },
+              { value: true, label: "Oscuro", Icon: MoonIcon },
+            ].map(({ value, label, Icon }) => {
+              const active = darkMode === value;
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setDarkMode(dispatch, value)}
+                  className={`flex items-center justify-center gap-2 rounded-xl border p-3 transition hover:border-blue-gray-400 ${
+                    active ? "border-blue-gray-900 ring-1 ring-blue-gray-900" : "border-blue-gray-100"
+                  }`}
+                >
+                  <Icon className="h-5 w-5 text-blue-gray-700" />
+                  <Typography variant="small" color="blue-gray" className={active ? "font-bold" : "font-medium"}>
+                    {label}
+                  </Typography>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="border-t border-blue-gray-50 px-2 py-6">
@@ -95,9 +129,9 @@ export function Configurator() {
             Tipo de menú
           </Typography>
           <Typography variant="small" className="font-normal text-blue-gray-600">
-            Fondo del menú lateral.
+            {darkMode ? "En modo oscuro el menú siempre es oscuro." : "Fondo del menú lateral."}
           </Typography>
-          <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className={`mt-4 grid grid-cols-3 gap-3 ${darkMode ? "pointer-events-none opacity-50" : ""}`}>
             {SIDENAV_TYPES.map(({ value, label, preview }) => {
               const active = sidenavType === value;
               return (
@@ -105,6 +139,7 @@ export function Configurator() {
                   key={value}
                   type="button"
                   aria-pressed={active}
+                  disabled={darkMode}
                   onClick={() => setSidenavType(dispatch, value)}
                   className={`rounded-xl border p-2 text-center transition hover:border-blue-gray-400 ${
                     active ? "border-blue-gray-900 ring-1 ring-blue-gray-900" : "border-blue-gray-100"
