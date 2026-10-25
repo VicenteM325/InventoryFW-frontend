@@ -13,8 +13,11 @@ import { productService } from "@/services/productService";
 import { validateQuantity, validateRequired } from "@/utils/validators";
 import { findProductByBarcode } from "@/utils/barcode";
 import { ScanButton } from "@/components/ScanButton";
+import { useFeedback } from "@/context/FeedbackContext";
+import { digitsOnly } from "@/utils/numberInput";
 
 export function Sales() {
+  const { toast } = useFeedback();
   const [products, setProducts] = useState([]);
   const [recentSales, setRecentSales] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,7 +107,7 @@ export function Sales() {
     
     const customerError = validateRequired(customerName, 'El nombre del cliente');
     if (customerError) {
-      alert(customerError);
+      toast.error(customerError);
       return;
     }
 
@@ -112,19 +115,19 @@ export function Sales() {
     const requested = {};
     for (let i = 0; i < items.length; i++) {
       if (!items[i].productId) {
-        alert(`Por favor selecciona un producto para la fila ${i + 1}`);
+        toast.error(`Por favor selecciona un producto para la fila ${i + 1}`);
         return;
       }
       const productId = parseInt(items[i].productId);
       const product = products.find((p) => p.productId === productId);
       if (!product || !product.active) {
-        alert(`El producto de la fila ${i + 1} no está disponible para la venta`);
+        toast.error(`El producto de la fila ${i + 1} no está disponible para la venta`);
         return;
       }
       requested[productId] = (requested[productId] || 0) + Number(items[i].quantity);
       const quantityError = validateQuantity(items[i].quantity, product.stock - (requested[productId] - Number(items[i].quantity)));
       if (quantityError) {
-        alert(`Fila ${i + 1} (${product.name}): ${quantityError}`);
+        toast.error(`Fila ${i + 1} (${product.name}): ${quantityError}`);
         return;
       }
     }
@@ -146,13 +149,13 @@ export function Sales() {
       setItems([{ productId: '', quantity: 1, unitPrice: 0 }]);
       setCustomerName('');
       await fetchData();
-      alert('Venta registrada exitosamente');
+      toast.success('Venta registrada exitosamente');
     } catch (error) {
       console.error('Error creating sale:', error);
       const errorMsg = error.response?.data?.message || 
                        error.response?.data?.error || 
                        'Error al registrar la venta';
-      alert(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSubmitting(false);
     }
@@ -192,53 +195,45 @@ export function Sales() {
           </div>
 
           {items.map((item, index) => (
-            <div key={index} className="grid grid-cols-1 gap-4 md:grid-cols-4">
-              <Select
-                label="Producto"
-                value={item.productId}
-                onChange={(value) => updateItem(index, 'productId', value)}
-              >
-                {products.filter((p) => p.active).map((product) => (
-                  <Option key={product.productId} value={product.productId.toString()}>
-                    {product.name} (Stock: {product.stock})
-                  </Option>
-                ))}
-              </Select>
+            <div key={index} className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+              <div className="min-w-0 flex-1 [&>div]:!min-w-0">
+                <Select
+                  label="Producto"
+                  value={item.productId}
+                  onChange={(value) => updateItem(index, 'productId', value)}
+                >
+                  {products.filter((p) => p.active).map((product) => (
+                    <Option key={product.productId} value={product.productId.toString()}>
+                      {product.name} (Stock: {product.stock})
+                    </Option>
+                  ))}
+                </Select>
+              </div>
 
-              <Input
-                label="Cantidad"
-                aria-label="Cantidad"
-                type="number"
-                min="1"
-                value={item.quantity}
-                onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-              />
+              <div className="w-full md:w-32 [&>div]:!min-w-0">
+                <Input
+                  label="Cantidad"
+                  aria-label="Cantidad"
+                  inputMode="numeric"
+                  value={item.quantity}
+                  onChange={(e) => updateItem(index, 'quantity', digitsOnly(e.target.value))}
+                />
+              </div>
 
               {/* El precio es el del catálogo: el servidor lo fija, no se edita aquí. */}
-              <Input
-                label="Precio Unitario (catálogo)"
-                aria-label="Precio Unitario (catálogo)"
-                type="number"
-                value={item.unitPrice}
-                readOnly
-                disabled
-              />
+              <Typography variant="small" color="blue-gray" className="whitespace-nowrap font-normal md:w-36">
+                Precio: Q{Number(item.unitPrice || 0).toFixed(2)}
+              </Typography>
 
-              <div className="flex items-center gap-2">
-                <Typography variant="small" color="blue-gray" className="font-medium">
-                  Total: Q{(item.unitPrice * item.quantity).toFixed(2)}
-                </Typography>
-                {items.length > 1 && (
-                  <Button
-                    color="red"
-                    variant="text"
-                    size="sm"
-                    onClick={() => removeItem(index)}
-                  >
-                    Eliminar
-                  </Button>
-                )}
-              </div>
+              <Typography variant="small" color="blue-gray" className="whitespace-nowrap font-bold md:w-36">
+                Total: Q{(item.unitPrice * (Number(item.quantity) || 0)).toFixed(2)}
+              </Typography>
+
+              {items.length > 1 && (
+                <Button color="red" variant="text" size="sm" onClick={() => removeItem(index)}>
+                  Eliminar
+                </Button>
+              )}
             </div>
           ))}
 
@@ -253,7 +248,7 @@ export function Sales() {
 
           <div className="flex justify-between items-center">
             <Typography variant="h6" color="blue-gray">
-              Total de la Venta: Q{items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0).toFixed(2)}
+              Total de la Venta: Q{items.reduce((sum, item) => sum + (item.unitPrice * (Number(item.quantity) || 0)), 0).toFixed(2)}
             </Typography>
             <Button type="submit" color="green" disabled={submitting}>
               {submitting ? 'Registrando...' : 'Registrar Venta'}

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import PropTypes from "prop-types";
 import { Link, NavLink } from "react-router-dom";
 import { XMarkIcon } from "@heroicons/react/24/outline";
@@ -22,14 +23,32 @@ export function Sidenav({ brandImg, brandName, routes }) {
     transparent: "bg-transparent",
   };
 
+  const closeSidenav = () => setOpenSidenav(dispatch, false);
+
+  // Escape cierra el menú mientras está abierto (relevante en móvil, donde es un cajón).
+  useEffect(() => {
+    if (!openSidenav) return undefined;
+    const onKeyDown = (e) => e.key === "Escape" && setOpenSidenav(dispatch, false);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [openSidenav, dispatch]);
+
   return (
+    <>
+    <div
+      aria-hidden="true"
+      onClick={closeSidenav}
+      className={`fixed inset-0 z-[45] bg-black/40 transition-opacity duration-300 xl:hidden ${
+        openSidenav ? "opacity-100" : "pointer-events-none opacity-0"
+      }`}
+    />
     <aside
       className={`${sidenavTypes[sidenavType]} ${
         openSidenav ? "translate-x-0" : "-translate-x-80"
       } fixed inset-0 z-50 my-4 ml-4 h-[calc(100vh-32px)] w-72 rounded-xl transition-transform duration-300 xl:translate-x-0 border border-blue-gray-100`}
     >
       <div className={`relative`}>
-        <Link to="/" className="py-6 px-8 text-center">
+        <Link to="/" className="block py-6 pl-8 pr-14 text-center" onClick={closeSidenav}>
           <Typography
             variant="h6"
             color={sidenavType === "dark" ? "white" : "blue-gray"}
@@ -39,13 +58,15 @@ export function Sidenav({ brandImg, brandName, routes }) {
         </Link>
         <IconButton
           variant="text"
-          color="white"
-          size="sm"
-          ripple={false}
-          className="absolute right-0 top-0 grid rounded-br-none rounded-tl-none xl:hidden"
-          onClick={() => setOpenSidenav(dispatch, false)}
+          color={sidenavType === "dark" ? "white" : "blue-gray"}
+          aria-label="Cerrar menú"
+          className="!absolute right-2 top-2 grid h-11 w-11 xl:hidden"
+          onClick={closeSidenav}
         >
-          <XMarkIcon strokeWidth={2.5} className="h-5 w-5 text-white" />
+          <XMarkIcon
+            strokeWidth={2.5}
+            className={`h-6 w-6 ${sidenavType === "dark" ? "text-white" : "text-blue-gray-700"}`}
+          />
         </IconButton>
       </div>
       <div className="m-4">
@@ -68,7 +89,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
                 .filter(page => !page.hidden) 
                 .map(({ icon, name, path }) => (
                   <li key={name}>
-                    <NavLink to={`/${layout}${path}`}>
+                    <NavLink to={`/${layout}${path}`} onClick={closeSidenav}>
                       {({ isActive }) => (
                         <Button
                           variant={isActive ? "gradient" : "text"}
@@ -98,6 +119,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
           ))}
       </div>
     </aside>
+    </>
   );
 }
 
