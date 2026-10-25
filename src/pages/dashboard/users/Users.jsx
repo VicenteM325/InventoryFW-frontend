@@ -21,6 +21,7 @@ import {
   validateRequired,
   validateUserName,
 } from "@/utils/validators";
+import { useFeedback } from "@/context/FeedbackContext";
 
 const TABLE_HEAD = ['Nombre', 'Usuario', 'Correo', 'Rol', '2FA', 'Estado', 'Acciones'];
 
@@ -34,6 +35,7 @@ const EMPTY_CREATE_FORM = {
 };
 
 export function Users() {
+  const { confirm } = useFeedback();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -116,6 +118,15 @@ export function Users() {
   };
 
   const toggleActive = async (user) => {
+    const accepted = await confirm({
+      title: user.active ? 'Desactivar usuario' : 'Activar usuario',
+      message: user.active
+        ? `¿Desactivar a "${user.name || user.userName}"? No podrá iniciar sesión.`
+        : `¿Activar a "${user.name || user.userName}"? Podrá iniciar sesión nuevamente.`,
+      confirmText: user.active ? 'Desactivar' : 'Activar',
+      danger: user.active,
+    });
+    if (!accepted) return;
     try {
       if (user.active) {
         await userService.deactivate(user.userId);

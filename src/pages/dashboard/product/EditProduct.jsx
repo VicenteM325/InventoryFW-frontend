@@ -13,19 +13,22 @@ import {
 import { productService } from "@/services/productService";
 import { ScanButton } from "@/components/ScanButton";
 import { supplierService } from "@/services/supplierService";
+import { useFeedback } from "@/context/FeedbackContext";
+import { digitsOnly, decimalOnly } from "@/utils/numberInput";
 
 const EMPTY_FORM = {
   name: '',
   barcode: '',
   description: '',
-  stock: 0,
+  stock: '',
   price: '',
   category: '',
-  minStock: 2,
+  minStock: '',
   supplierId: '',
 };
 
 export function EditProduct() {
+  const { toast } = useFeedback();
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -47,15 +50,15 @@ export function EditProduct() {
         name: data.name,
         barcode: data.barcode,
         description: data.description || '',
-        stock: data.stock,
-        price: data.price != null ? data.price : '',
+        stock: String(data.stock ?? ''),
+        price: data.price != null ? String(data.price) : '',
         category: data.category || '',
-        minStock: data.minStock != null ? data.minStock : 2,
+        minStock: data.minStock != null ? String(data.minStock) : '',
         supplierId: data.supplierId != null ? data.supplierId.toString() : '',
       });
     } catch (error) {
       console.error('Error fetching product:', error);
-      alert('Error al cargar el producto');
+      toast.error('Error al cargar el producto');
       navigate('/dashboard/products');
     } finally {
       setLoading(false);
@@ -66,7 +69,8 @@ export function EditProduct() {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'El nombre es obligatorio';
     if (!formData.barcode.trim()) newErrors.barcode = 'El código de barras es obligatorio';
-    if (formData.stock < 0) newErrors.stock = 'El stock no puede ser negativo';
+    if (formData.stock === '') newErrors.stock = 'El stock es obligatorio';
+    if (formData.minStock === '') newErrors.minStock = 'El stock mínimo es obligatorio';
     if (formData.price === '' || Number(formData.price) < 0) newErrors.price = 'El precio es obligatorio';
     if (!formData.category) newErrors.category = 'La categoría es obligatoria';
     setErrors(newErrors);
@@ -77,7 +81,9 @@ export function EditProduct() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'stock' || name === 'minStock' ? parseInt(value) || 0 : value
+      [name]: name === 'stock' || name === 'minStock' ? digitsOnly(value)
+        : name === 'price' ? decimalOnly(value)
+        : value
     }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -99,13 +105,15 @@ export function EditProduct() {
     try {
       await productService.update(id, {
         ...formData,
+        stock: parseInt(formData.stock, 10),
+        minStock: parseInt(formData.minStock, 10),
         price: parseFloat(formData.price),
         supplierId: formData.supplierId ? parseInt(formData.supplierId) : null,
       });
       navigate('/dashboard/products');
     } catch (error) {
       console.error('Error updating product:', error);
-      alert(error.response?.data?.message || 'Error al actualizar el producto');
+      toast.error(error.response?.data?.message || 'Error al actualizar el producto');
     } finally {
       setSaving(false);
     }
@@ -212,9 +220,7 @@ export function EditProduct() {
             <div>
               <Input
                 label="Precio de venta (Q)"
-                type="number"
-                step="0.01"
-                min="0"
+                inputMode="decimal"
                 name="price"
                 value={formData.price}
                 onChange={handleChange}
@@ -230,7 +236,7 @@ export function EditProduct() {
             <div>
               <Input
                 label="Stock"
-                type="number"
+                inputMode="numeric"
                 name="stock"
                 value={formData.stock}
                 onChange={handleChange}
@@ -246,12 +252,17 @@ export function EditProduct() {
             <div>
               <Input
                 label="Stock mínimo"
-                type="number"
-                min="0"
+                inputMode="numeric"
                 name="minStock"
                 value={formData.minStock}
                 onChange={handleChange}
+                error={!!errors.minStock}
               />
+              {errors.minStock && (
+                <Typography variant="small" color="red" className="mt-1">
+                  {errors.minStock}
+                </Typography>
+              )}
             </div>
           </div>
 

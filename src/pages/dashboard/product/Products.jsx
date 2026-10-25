@@ -18,6 +18,7 @@ import { productService } from "@/services/productService";
 import { ScanButton } from "@/components/ScanButton";
 import { findProductByBarcode } from "@/utils/barcode";
 import { AuthContext } from "@/context/AuthContext"; 
+import { useFeedback } from "@/context/FeedbackContext";
 
 const TABLE_HEAD = ['Producto', 'Código', 'Categoría', 'Precio', 'Proveedor', 'Stock', 'Estado', 'Acciones'];
 
@@ -33,6 +34,7 @@ const CATEGORY_LABELS = {
 };
 
 export function Products() {
+  const { toast, confirm } = useFeedback();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +61,15 @@ export function Products() {
 
   const toggleActive = async (product) => {
     const action = product.active ? 'desactivar' : 'activar';
-    if (!window.confirm(`¿Seguro que quieres ${action} este producto?`)) return;
+    const accepted = await confirm({
+      title: product.active ? 'Desactivar producto' : 'Activar producto',
+      message: product.active
+        ? `¿Desactivar "${product.name}"? Dejará de estar disponible para la venta.`
+        : `¿Activar "${product.name}"? Volverá a estar disponible para la venta.`,
+      confirmText: product.active ? 'Desactivar' : 'Activar',
+      danger: product.active,
+    });
+    if (!accepted) return;
     try {
       if (product.active) {
         await productService.delete(product.productId);
@@ -69,7 +79,7 @@ export function Products() {
       await fetchProducts();
     } catch (error) {
       console.error('Error toggling product active state:', error);
-      alert(error.response?.data?.message || `Error al ${action} el producto`);
+      toast.error(error.response?.data?.message || `Error al ${action} el producto`);
     }
   };
 

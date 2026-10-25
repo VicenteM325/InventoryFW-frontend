@@ -11,12 +11,14 @@ import {
 import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { supplierService } from "@/services/supplierService";
 import { AuthContext } from "@/context/AuthContext";
+import { useFeedback } from "@/context/FeedbackContext";
 
 const TABLE_HEAD = ['Nombre', 'Contacto', 'Teléfono', 'Acciones'];
 
 const EMPTY_CREATE_FORM = { name: '', contactName: '', phone: '' };
 
 export function Suppliers() {
+  const { confirm } = useFeedback();
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -86,7 +88,14 @@ export function Suppliers() {
   };
 
   const handleDelete = async (supplierId) => {
-    if (!window.confirm('¿Eliminar este proveedor?')) return;
+    const supplier = suppliers.find((s) => s.supplierId === supplierId);
+    const accepted = await confirm({
+      title: 'Eliminar proveedor',
+      message: `¿Eliminar ${supplier ? `a "${supplier.name}"` : 'este proveedor'}? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      danger: true,
+    });
+    if (!accepted) return;
     setError('');
     try {
       await supplierService.delete(supplierId);

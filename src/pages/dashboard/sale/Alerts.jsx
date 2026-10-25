@@ -8,8 +8,10 @@ import {
 } from "@material-tailwind/react";
 import { stockAlertService } from "@/services/stockAlertService";
 import { AuthContext } from "@/context/AuthContext";
+import { useFeedback } from "@/context/FeedbackContext";
 
 export function Alerts() {
+  const { toast } = useFeedback();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
@@ -40,7 +42,7 @@ export function Alerts() {
       await fetchAlerts();
     } catch (error) {
       console.error('Error attending alert:', error);
-      alert(error.response?.data?.message || 'Error al atender la alerta');
+      toast.error(error.response?.data?.message || 'Error al atender la alerta');
     } finally {
       setProcessing(null);
     }
