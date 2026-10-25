@@ -10,7 +10,7 @@ import {
 } from "@material-tailwind/react";
 import { saleService } from "@/services/saleService";
 import { productService } from "@/services/productService";
-import { validateQuantity, validateRequired } from "@/utils/validators";
+import { validateEmail, validateQuantity, validateRequired } from "@/utils/validators";
 import { findProductByBarcode } from "@/utils/barcode";
 import { ScanButton } from "@/components/ScanButton";
 import { useFeedback } from "@/context/FeedbackContext";
@@ -24,6 +24,7 @@ export function Sales() {
   const [submitting, setSubmitting] = useState(false);
   const [items, setItems] = useState([{ productId: '', quantity: 1, unitPrice: 0 }]);
   const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   // El escáner puede leer varios códigos antes de que React vuelva a renderizar:
   // se trabaja sobre la última lista, no sobre la del render anterior.
   const itemsRef = useRef(items);
@@ -111,6 +112,12 @@ export function Sales() {
       return;
     }
 
+    const emailError = validateEmail(customerEmail, { optional: true });
+    if (emailError) {
+      toast.error(emailError);
+      return;
+    }
+
     // Stock pedido por producto (el mismo producto puede repetirse en varias filas).
     const requested = {};
     for (let i = 0; i < items.length; i++) {
@@ -138,18 +145,28 @@ export function Sales() {
       // producto; aquí solo se envían producto y cantidad.
       const saleData = {
         customerName: customerName.trim(),
+        // Con correo, el servidor envía el recibo de la venta a esa dirección.
+        ...(customerEmail.trim() && { customerEmail: customerEmail.trim() }),
         items: items.map(item => ({
           productId: parseInt(item.productId),
           quantity: parseInt(item.quantity)
         }))
       };
 
-      await saleService.create(saleData);
-      
+      const sale = await saleService.create(saleData);
+      const email = customerEmail.trim();
+
       setItems([{ productId: '', quantity: 1, unitPrice: 0 }]);
       setCustomerName('');
+      setCustomerEmail('');
       await fetchData();
-      toast.success('Venta registrada exitosamente');
+      if (sale?.receiptStatus === 'ENVIADO') {
+        toast.success(`Venta registrada. Recibo enviado a ${email}`);
+      } else if (sale?.receiptStatus === 'NO_ENVIADO') {
+        toast.info(`Venta registrada, pero no se pudo enviar el recibo a ${email}`);
+      } else {
+        toast.success('Venta registrada exitosamente');
+      }
     } catch (error) {
       console.error('Error creating sale:', error);
       const errorMsg = error.response?.data?.message || 
@@ -184,6 +201,16 @@ export function Sales() {
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               required
+            />
+          </div>
+
+          <div>
+            <Input
+              type="email"
+              label="Correo del cliente (opcional, para enviarle el recibo)"
+              aria-label="Correo del cliente"
+              value={customerEmail}
+              onChange={(e) => setCustomerEmail(e.target.value)}
             />
           </div>
 
