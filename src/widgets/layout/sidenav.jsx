@@ -14,7 +14,9 @@ import { filterRoutesForNavigation } from "@/auth/menuByRole";
 
 export function Sidenav({ brandImg, brandName, routes }) {
   const [controller, dispatch] = useMaterialTailwindController();
-  const { sidenavColor, sidenavType, openSidenav } = controller;
+  const { sidenavColor, openSidenav, darkMode } = controller;
+  // En modo oscuro el menú siempre es oscuro, sin importar el tipo elegido.
+  const sidenavType = darkMode ? "dark" : controller.sidenavType;
   const { roles } = useAuth();
   const visibleRoutes = filterRoutesForNavigation(routes, roles);
   const sidenavTypes = {
