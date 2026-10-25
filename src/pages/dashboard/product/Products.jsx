@@ -15,6 +15,8 @@ import {
   PlusIcon,
 } from "@heroicons/react/24/outline";
 import { productService } from "@/services/productService";
+import { ScanButton } from "@/components/ScanButton";
+import { findProductByBarcode } from "@/utils/barcode";
 import { AuthContext } from "@/context/AuthContext"; 
 
 const TABLE_HEAD = ['Producto', 'Código', 'Categoría', 'Precio', 'Proveedor', 'Stock', 'Estado', 'Acciones'];
@@ -71,6 +73,15 @@ export function Products() {
     }
   };
 
+  // Código leído por la cámara: filtra la lista por ese código.
+  const handleScan = (code) => {
+    setSearchTerm(code);
+    const found = findProductByBarcode(products, code);
+    return found
+      ? { ok: true, message: `Encontrado: ${found.name}` }
+      : { ok: false, message: `No hay un producto con el código ${code}` };
+  };
+
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.barcode.includes(searchTerm)
@@ -104,6 +115,7 @@ export function Products() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          <ScanButton title="Buscar producto por código" onDetected={handleScan} />
           <Button
             color="blue"
             className="flex items-center gap-2"

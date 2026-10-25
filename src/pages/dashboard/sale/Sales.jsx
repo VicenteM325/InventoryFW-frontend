@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Card,
   Typography,
@@ -11,6 +11,8 @@ import {
 import { saleService } from "@/services/saleService";
 import { productService } from "@/services/productService";
 import { validateQuantity, validateRequired } from "@/utils/validators";
+import { findProductByBarcode } from "@/utils/barcode";
+import { ScanButton } from "@/components/ScanButton";
 
 export function Sales() {
   const [products, setProducts] = useState([]);
@@ -19,6 +21,10 @@ export function Sales() {
   const [submitting, setSubmitting] = useState(false);
   const [items, setItems] = useState([{ productId: '', quantity: 1, unitPrice: 0 }]);
   const [customerName, setCustomerName] = useState('');
+  // El escáner puede leer varios códigos antes de que React vuelva a renderizar:
+  // se trabaja sobre la última lista, no sobre la del render anterior.
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
 
   useEffect(() => {
     fetchData();
@@ -42,6 +48,36 @@ export function Sales() {
 
   const addItem = () => {
     setItems([...items, { productId: '', quantity: 1, unitPrice: 0 }]);
+  };
+
+  // Código leído por la cámara: agrega el producto a la venta o suma una unidad si
+  // ya estaba. Devuelve el resultado para mostrarlo en el diálogo del escáner.
+  const handleScan = (code) => {
+    const product = findProductByBarcode(products, code);
+    if (!product) return { ok: false, message: `No hay un producto con el código ${code}` };
+    if (!product.active) return { ok: false, message: `${product.name} está dado de baja` };
+
+    const current = itemsRef.current;
+    const id = String(product.productId);
+    const existing = current.findIndex((item) => item.productId === id);
+
+    if (existing >= 0) {
+      const quantity = Number(current[existing].quantity) + 1;
+      const quantityError = validateQuantity(quantity, product.stock);
+      if (quantityError) return { ok: false, message: `${product.name}: ${quantityError}` };
+      const next = current.map((item, i) => (i === existing ? { ...item, quantity } : item));
+      itemsRef.current = next;
+      setItems(next);
+      return { ok: true, message: `${product.name}: ${quantity} unidades` };
+    }
+
+    if (product.stock < 1) return { ok: false, message: `${product.name} está agotado` };
+    const row = { productId: id, quantity: 1, unitPrice: product.price || 0 };
+    // La fila vacía inicial se reutiliza en vez de dejarla sin producto.
+    const next = current.length === 1 && !current[0].productId ? [row] : [...current, row];
+    itemsRef.current = next;
+    setItems(next);
+    return { ok: true, message: `Agregado: ${product.name}` };
   };
 
   const removeItem = (index) => {
@@ -148,9 +184,12 @@ export function Sales() {
             />
           </div>
 
-          <Typography variant="h6" color="blue-gray">
-            Productos
-          </Typography>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Typography variant="h6" color="blue-gray">
+              Productos
+            </Typography>
+            <ScanButton label="Escanear producto" title="Escanear productos de la venta" continuous onDetected={handleScan} />
+          </div>
 
           {items.map((item, index) => (
             <div key={index} className="grid grid-cols-1 gap-4 md:grid-cols-4">

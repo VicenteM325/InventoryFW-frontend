@@ -12,6 +12,8 @@
   "dependencies": {
     "@heroicons/react": "2.0.18",
     "@material-tailwind/react": "2.1.4",
+    "@zxing/browser": "0.1.5",
+    "@zxing/library": "0.21.3",
     "apexcharts": "3.44.0",
     "axios": "^1.13.2",
     "prop-types": "15.8.1",
