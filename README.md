@@ -1,6 +1,6 @@
 # InventoryFW — Frontend
 
-Interfaz web de Multiservicios Wilson: inventario, ventas, alertas de stock, notificaciones, reportes y fotocopia de DPI.
+Interfaz web de Multiservicios Wilson: inventario, ventas, alertas de stock, notificaciones, reportes, fotocopia de DPI y fotos tamaño cédula/pasaporte.
 React 18 · Vite 4 · Tailwind CSS · Material Tailwind, a partir de la plantilla [Material Tailwind Dashboard React](https://github.com/creativetimofficial/material-tailwind-dashboard-react) de Creative Tim (licencia MIT en `LICENSE`).
 
 Backend: [InventoryFW-backend](https://github.com/VicenteM325/InventoryFW-backend).
@@ -19,7 +19,7 @@ npm run dev              # http://localhost:5173
 
 - `npm run build` toma `VITE_API_URL=/` de `.env.production`: el navegador llama a `/api/...` y `/auth/...` en el mismo dominio de Netlify.
 - `public/_redirects` hace de proxy hacia el backend en Railway (así la cookie de sesión es de primera parte y no hay CORS en el navegador) y sirve `index.html` en las rutas del SPA. Solo van al backend `/api/*` y `/auth/login`, `/auth/logout`, `/auth/check-auth` y `/auth/user/details`: `/auth/sign-in` es una página del SPA.
-- El proxy de Netlify corta cada petición a los 26 s, contando la subida: por eso las fotos de DPI se reducen en el navegador a 2560 px antes de subirlas (`src/utils/imageDownscale.js`).
+- El proxy de Netlify corta cada petición a los 26 s, contando la subida: por eso las fotos de DPI, cédula y pasaporte se reducen en el navegador a 2560 px antes de subirlas (`src/utils/imageDownscale.js`).
 - `public/_headers`: caché permanente para `/assets/*` y cabeceras de seguridad básicas.
 
 ## CI/CD
