@@ -60,4 +60,51 @@ export const documentService = {
       })
       .then((res) => res.data);
   },
+
+  // Medidas y capacidad de las hojas de fotos (cédula y pasaporte).
+  getIdPhotoSpecs: () => api.get(`${API_URL}/id-photo/specs`).then((res) => res.data),
+
+  // `crop` son los parámetros de toCropParams (cropX, cropY, cropWidth,
+  // cropHeight) o null para que el backend recorte centrado.
+  previewIdPhoto: ({ file, type, settings, rotation, crop, signal }) => {
+    const formData = buildIdPhotoForm({ file, type, settings, rotation, crop });
+    return api
+      .post(`${API_URL}/id-photo/preview`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        responseType: 'blob',
+        signal,
+      })
+      .then((res) => res.data);
+  },
+
+  generateIdPhoto: ({ file, type, copies, format, clientName, settings, rotation, crop }) => {
+    const formData = buildIdPhotoForm({ file, type, settings, rotation, crop });
+    formData.append('copies', copies);
+    formData.append('format', format);
+    if (clientName) {
+      formData.append('clientName', clientName);
+    }
+    return api
+      .post(`${API_URL}/id-photo`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        responseType: 'blob',
+      })
+      .then((res) => res.data);
+  },
 };
+
+function buildIdPhotoForm({ file, type, settings, rotation, crop }) {
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('type', type);
+  formData.append('brightness', settings.brightness);
+  formData.append('contrast', settings.contrast);
+  formData.append('sharpness', settings.sharpness);
+  formData.append('rotation', rotation);
+  if (crop) {
+    for (const [key, value] of Object.entries(crop)) {
+      formData.append(key, value);
+    }
+  }
+  return formData;
+}

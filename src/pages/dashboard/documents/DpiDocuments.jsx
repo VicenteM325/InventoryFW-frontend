@@ -6,9 +6,14 @@ import {
   Input,
   Select,
   Option,
+  Tabs,
+  TabsHeader,
+  Tab,
 } from "@material-tailwind/react";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { documentService } from "@/services/documentService";
+import { useIdPhotoSpecs } from "@/hooks/useIdPhotoSpecs";
+import { IdPhotoForm } from "./IdPhotoForm";
 import { downloadBlob, printBlob, extractErrorMessage } from "@/utils/fileDownload";
 import { downscaleImage } from "@/utils/imageDownscale";
 import { useCornerAdjustment } from "@/hooks/useCornerAdjustment";
@@ -157,7 +162,7 @@ function ImageDropzone({
   );
 }
 
-export function DpiDocuments() {
+function DpiCopyForm() {
   const [front, setFront] = useState(null);
   const [frontRawPreview, setFrontRawPreview] = useState(null);
   const [back, setBack] = useState(null);
@@ -240,14 +245,7 @@ export function DpiDocuments() {
   };
 
   return (
-    <div className="mt-12">
-      <Typography variant="h5" color="blue-gray" className="mb-1">
-        Documentos DPI
-      </Typography>
-      <Typography variant="small" color="gray" className="mb-6">
-        Sube el anverso y reverso; el sistema detecta el borde de la tarjeta, la endereza y ajusta el color automáticamente
-      </Typography>
-
+    <div>
       <Card className="p-6">
         <form onSubmit={handleGenerate} className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -351,6 +349,63 @@ export function DpiDocuments() {
           </div>
         </Card>
       )}
+    </div>
+  );
+}
+
+const TABS = [
+  {
+    value: 'DPI',
+    label: 'Fotocopia DPI',
+    description: 'Sube el anverso y reverso; el sistema detecta el borde de la tarjeta, la endereza y ajusta el color automáticamente',
+  },
+  {
+    value: 'CEDULA',
+    label: 'Foto cédula',
+    description: 'Sube la foto, encuadra el rostro con el marco y genera una hoja 4×6 con varias copias tamaño cédula',
+  },
+  {
+    value: 'PASAPORTE',
+    label: 'Foto pasaporte',
+    description: 'Sube la foto, encuadra el rostro con el marco y genera una hoja 4×6 con varias copias tamaño pasaporte',
+  },
+];
+
+// Los tres formularios quedan siempre montados y solo se oculta el que no
+// está activo: así cambiar de pestaña no pierde la foto ni los ajustes.
+export function DpiDocuments() {
+  const [tab, setTab] = useState('DPI');
+  const { specs, error: specsError } = useIdPhotoSpecs();
+  const activeTab = TABS.find((t) => t.value === tab);
+
+  return (
+    <div className="mt-12">
+      <Typography variant="h5" color="blue-gray" className="mb-1">
+        Documentos DPI
+      </Typography>
+      <Typography variant="small" color="gray" className="mb-4">
+        {activeTab.description}
+      </Typography>
+
+      <Tabs value={tab} className="mb-6">
+        <TabsHeader className="max-w-xl">
+          {TABS.map(({ value, label }) => (
+            <Tab key={value} value={value} onClick={() => setTab(value)}>
+              {label}
+            </Tab>
+          ))}
+        </TabsHeader>
+      </Tabs>
+
+      <div className={tab === 'DPI' ? '' : 'hidden'}>
+        <DpiCopyForm />
+      </div>
+      <div className={tab === 'CEDULA' ? '' : 'hidden'}>
+        <IdPhotoForm type="CEDULA" spec={specs?.CEDULA} specError={specsError} />
+      </div>
+      <div className={tab === 'PASAPORTE' ? '' : 'hidden'}>
+        <IdPhotoForm type="PASAPORTE" spec={specs?.PASAPORTE} specError={specsError} />
+      </div>
     </div>
   );
 }

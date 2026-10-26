@@ -54,7 +54,7 @@ export function Home() {
     {
       color: "green",
       icon: DocumentTextIcon,
-      title: "Documentos DPI generados",
+      title: "Documentos generados",
       value: documentsGenerated,
       footerLabel: "Sin leer",
     },
